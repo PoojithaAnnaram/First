@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import Captcha from './Captcha';
+import { useToast } from '../contexts/ToastContext';
 
 const CASE_TYPES = [
   'CRL (Criminal)',
@@ -31,14 +33,39 @@ function SearchForm({ onSearch, loading }) {
     year: new Date().getFullYear().toString(),
     court: 'Delhi High Court',
   });
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [errors, setErrors] = useState({});
+  const { addToast } = useToast();
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.caseNumber.trim()) {
+      newErrors.caseNumber = 'Case number is required';
+    }
+
+    if (!formData.year || formData.year < 1950 || formData.year > new Date().getFullYear()) {
+      newErrors.year = 'Please enter a valid year';
+    }
+
+    if (!captchaVerified) {
+      newErrors.captcha = 'Please verify CAPTCHA';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.caseNumber) {
-      alert('Please enter a case number');
+
+    if (!validateForm()) {
+      addToast('Please fix the errors in the form', 'error');
       return;
     }
+
     onSearch(formData);
+    setCaptchaVerified(false);
   };
 
   const handleChange = (e) => {
@@ -92,7 +119,9 @@ function SearchForm({ onSearch, loading }) {
             placeholder="Enter case number"
             value={formData.caseNumber}
             onChange={handleChange}
+            className={errors.caseNumber ? 'input-error' : ''}
           />
+          {errors.caseNumber && <span className="error-text">{errors.caseNumber}</span>}
         </div>
 
         <div className="form-group">
@@ -105,12 +134,20 @@ function SearchForm({ onSearch, loading }) {
             max={new Date().getFullYear()}
             value={formData.year}
             onChange={handleChange}
+            className={errors.year ? 'input-error' : ''}
           />
+          {errors.year && <span className="error-text">{errors.year}</span>}
         </div>
       </div>
 
+      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+        <label>Security Verification</label>
+        <Captcha onVerify={setCaptchaVerified} />
+        {errors.captcha && <span className="error-text">{errors.captcha}</span>}
+      </div>
+
       <div className="button-group">
-        <button type="submit" className="btn-primary" disabled={loading}>
+        <button type="submit" className="btn-primary" disabled={loading || !captchaVerified}>
           {loading ? (
             <>
               <span className="loading"></span>

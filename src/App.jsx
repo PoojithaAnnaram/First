@@ -2,11 +2,14 @@ import { useState } from 'react';
 import SearchForm from './components/SearchForm';
 import CaseResults from './components/CaseResults';
 import CauseListDownloader from './components/CauseListDownloader';
+import Header from './components/Header';
+import { useToast } from './contexts/ToastContext';
 
 function App() {
   const [caseData, setCaseData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { addToast } = useToast();
 
   const handleSearch = async (searchParams) => {
     setLoading(true);
@@ -32,8 +35,10 @@ function App() {
 
       const data = await response.json();
       setCaseData(data);
+      addToast('Case data fetched successfully!', 'success');
     } catch (err) {
       setError(err.message);
+      addToast('Failed to fetch case data', 'error');
     } finally {
       setLoading(false);
     }
@@ -41,20 +46,23 @@ function App() {
 
   return (
     <>
-      <div className="container">
-        <h1>Court Data Fetcher</h1>
-        <p className="subtitle">
-          Fetch case details, judgments, and orders from Indian High Courts and District Courts
-        </p>
-        <SearchForm onSearch={handleSearch} loading={loading} />
-        {error && <div className="error">{error}</div>}
-      </div>
+      <Header />
+      <div className="main-content">
+        <div className="container">
+          <h1>Court Data Fetcher</h1>
+          <p className="subtitle">
+            Fetch case details, judgments, and orders from Indian High Courts and District Courts
+          </p>
+          <SearchForm onSearch={handleSearch} loading={loading} />
+          {error && <div className="error">{error}</div>}
+        </div>
 
-      <div className="container">
-        <CauseListDownloader />
-      </div>
+        <div className="container">
+          <CauseListDownloader />
+        </div>
 
-      {caseData && <CaseResults data={caseData} />}
+        {caseData && <CaseResults data={caseData} />}
+      </div>
     </>
   );
 }
