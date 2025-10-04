@@ -1,13 +1,24 @@
 function CaseResults({ data }) {
   if (!data) return null;
 
-  const { caseDetails, judgments } = data;
+  const { caseDetails, judgments, caseHistory } = data;
 
   return (
     <div className="results">
       <div className="case-header">
         <div className="case-title">{caseDetails.petitioner} vs {caseDetails.respondent}</div>
         <div className="case-number">{caseDetails.caseNumber}</div>
+        <div style={{ marginTop: '12px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+          <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+            <strong>Court:</strong> {caseDetails.court}
+          </span>
+          <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+            <strong>District:</strong> {caseDetails.district}
+          </span>
+          <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+            <strong>Case Type:</strong> {caseDetails.caseType}
+          </span>
+        </div>
       </div>
 
       <div className="details-grid">
@@ -41,6 +52,11 @@ function CaseResults({ data }) {
             <div className="detail-value">{caseDetails.judge}</div>
           </div>
         )}
+
+        <div className="detail-card">
+          <div className="detail-label">State</div>
+          <div className="detail-value">{caseDetails.state || 'N/A'}</div>
+        </div>
       </div>
 
       {judgments && judgments.length > 0 && (
@@ -72,6 +88,24 @@ function CaseResults({ data }) {
         <div className="empty-state">
           <div className="empty-icon">📄</div>
           <p>No judgments or orders available for this case</p>
+        </div>
+      )}
+
+      {caseHistory && caseHistory.length > 0 && (
+        <div className="judgments-section">
+          <h2 className="section-title">Case History</h2>
+          <div className="case-history-timeline">
+            {caseHistory.map((item, index) => (
+              <div key={index} className="timeline-item">
+                <div className="timeline-marker"></div>
+                <div className="timeline-content">
+                  <div className="timeline-date">{item.date}</div>
+                  <div className="timeline-event">{item.event}</div>
+                  <div className="timeline-description">{item.description}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

@@ -13,17 +13,60 @@ const CASE_TYPES = [
   'FAO (First Appeal from Order)',
 ];
 
-const COURTS = [
-  'Delhi High Court',
-  'Bombay High Court',
-  'Calcutta High Court',
-  'Madras High Court',
-  'Karnataka High Court',
-  'Kerala High Court',
-  'Allahabad High Court',
-  'Rajasthan High Court',
-  'Gujarat High Court',
-  'Patna High Court',
+const STATES = [
+  'Andhra Pradesh',
+  'Bihar',
+  'Chhattisgarh',
+  'Delhi',
+  'Goa',
+  'Gujarat',
+  'Haryana',
+  'Himachal Pradesh',
+  'Jharkhand',
+  'Karnataka',
+  'Kerala',
+  'Madhya Pradesh',
+  'Maharashtra',
+  'Odisha',
+  'Punjab',
+  'Rajasthan',
+  'Tamil Nadu',
+  'Telangana',
+  'Uttar Pradesh',
+  'Uttarakhand',
+  'West Bengal',
+];
+
+const DISTRICTS = {
+  'Andhra Pradesh': ['Visakhapatnam', 'Vijayawada', 'Guntur', 'Nellore', 'Kurnool'],
+  'Bihar': ['Patna', 'Gaya', 'Bhagalpur', 'Muzaffarpur', 'Darbhanga'],
+  'Chhattisgarh': ['Raipur', 'Bilaspur', 'Durg', 'Korba', 'Rajnandgaon'],
+  'Delhi': ['Central Delhi', 'East Delhi', 'New Delhi', 'North Delhi', 'South Delhi', 'West Delhi'],
+  'Goa': ['North Goa', 'South Goa'],
+  'Gujarat': ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Bhavnagar'],
+  'Haryana': ['Faridabad', 'Gurgaon', 'Hisar', 'Rohtak', 'Panipat'],
+  'Himachal Pradesh': ['Shimla', 'Kangra', 'Mandi', 'Solan', 'Una'],
+  'Jharkhand': ['Ranchi', 'Jamshedpur', 'Dhanbad', 'Bokaro', 'Deoghar'],
+  'Karnataka': ['Bengaluru Urban', 'Mysuru', 'Hubli', 'Mangaluru', 'Belagavi'],
+  'Kerala': ['Thiruvananthapuram', 'Kochi', 'Kozhikode', 'Thrissur', 'Kollam'],
+  'Madhya Pradesh': ['Bhopal', 'Indore', 'Jabalpur', 'Gwalior', 'Ujjain'],
+  'Maharashtra': ['Mumbai', 'Pune', 'Nagpur', 'Thane', 'Nashik'],
+  'Odisha': ['Bhubaneswar', 'Cuttack', 'Rourkela', 'Berhampur', 'Sambalpur'],
+  'Punjab': ['Ludhiana', 'Amritsar', 'Jalandhar', 'Patiala', 'Bathinda'],
+  'Rajasthan': ['Jaipur', 'Jodhpur', 'Kota', 'Bikaner', 'Udaipur'],
+  'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli', 'Salem'],
+  'Telangana': ['Hyderabad', 'Warangal', 'Nizamabad', 'Khammam', 'Karimnagar'],
+  'Uttar Pradesh': ['Lucknow', 'Kanpur', 'Ghaziabad', 'Agra', 'Varanasi'],
+  'Uttarakhand': ['Dehradun', 'Haridwar', 'Roorkee', 'Haldwani', 'Rudrapur'],
+  'West Bengal': ['Kolkata', 'Howrah', 'Durgapur', 'Asansol', 'Siliguri'],
+};
+
+const COURT_LEVELS = [
+  'High Court',
+  'District Court',
+  'Sessions Court',
+  'Civil Court',
+  'Magistrate Court',
 ];
 
 function SearchForm({ onSearch, loading }) {
@@ -31,7 +74,9 @@ function SearchForm({ onSearch, loading }) {
     caseType: 'CRL (Criminal)',
     caseNumber: '',
     year: new Date().getFullYear().toString(),
-    court: 'Delhi High Court',
+    state: 'Delhi',
+    district: 'Central Delhi',
+    courtLevel: 'High Court',
   });
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const [errors, setErrors] = useState({});
@@ -69,26 +114,68 @@ function SearchForm({ onSearch, loading }) {
   };
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    if (name === 'state') {
+      setFormData({
+        ...formData,
+        state: value,
+        district: DISTRICTS[value][0],
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+    }
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <div className="form-grid">
         <div className="form-group">
-          <label htmlFor="court">Court</label>
+          <label htmlFor="state">State</label>
           <select
-            id="court"
-            name="court"
-            value={formData.court}
+            id="state"
+            name="state"
+            value={formData.state}
             onChange={handleChange}
           >
-            {COURTS.map((court) => (
-              <option key={court} value={court}>
-                {court}
+            {STATES.map((state) => (
+              <option key={state} value={state}>
+                {state}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="district">District</label>
+          <select
+            id="district"
+            name="district"
+            value={formData.district}
+            onChange={handleChange}
+          >
+            {DISTRICTS[formData.state].map((district) => (
+              <option key={district} value={district}>
+                {district}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="courtLevel">Court Level</label>
+          <select
+            id="courtLevel"
+            name="courtLevel"
+            value={formData.courtLevel}
+            onChange={handleChange}
+          >
+            {COURT_LEVELS.map((level) => (
+              <option key={level} value={level}>
+                {level}
               </option>
             ))}
           </select>

@@ -15,32 +15,83 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { caseType, caseNumber, year, court } = await req.json();
+    const { caseType, caseNumber, year, state, district, courtLevel } = await req.json();
+
+    if (!caseNumber || !year) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing required parameters",
+          message: "Case number and year are required"
+        }),
+        {
+          status: 400,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const caseTypeCode = caseType.split(' ')[0];
+    const formattedCaseNumber = `${caseTypeCode}/${caseNumber}/${year}`;
 
     const mockCaseData = {
       caseDetails: {
-        caseNumber: `${caseType.split(' ')[0]}/${caseNumber}/${year}`,
-        petitioner: "Sample Petitioner Name",
-        respondent: "Sample Respondent Name",
-        filingDate: "2024-01-15",
-        nextHearing: "2025-11-20",
-        courtNumber: "Court Room 5",
+        caseNumber: formattedCaseNumber,
+        petitioner: "Rajesh Kumar Singh",
+        respondent: "State of India & Ors.",
+        filingDate: `${year}-03-15`,
+        nextHearing: "2025-12-05",
+        courtNumber: "Court Room 7",
         status: "Active",
-        judge: "Hon'ble Justice Sample Name",
-        court: court,
+        judge: `Hon'ble Justice ${state === 'Delhi' ? 'Vipin Sanghi' : 'Rajendra Kumar'}`,
+        court: `${state} ${courtLevel}`,
+        state: state,
+        district: district,
+        courtLevel: courtLevel,
+        caseType: caseType,
       },
       judgments: [
         {
-          type: "Order",
-          date: "2024-08-10",
+          type: "Final Order",
+          date: `${year}-10-22`,
           url: "#",
-          fileName: "order_10082024.pdf",
+          fileName: `order_${formattedCaseNumber.replace(/\//g, '_')}.pdf`,
         },
         {
           type: "Interim Order",
-          date: "2024-06-15",
+          date: `${year}-07-18`,
           url: "#",
-          fileName: "interim_order_15062024.pdf",
+          fileName: `interim_order_${formattedCaseNumber.replace(/\//g, '_')}.pdf`,
+        },
+        {
+          type: "Notice",
+          date: `${year}-04-10`,
+          url: "#",
+          fileName: `notice_${formattedCaseNumber.replace(/\//g, '_')}.pdf`,
+        },
+      ],
+      caseHistory: [
+        {
+          date: `${year}-03-15`,
+          event: "Case Filed",
+          description: "Petition filed and admitted for hearing",
+        },
+        {
+          date: `${year}-04-10`,
+          event: "Notice Issued",
+          description: "Notice issued to respondents",
+        },
+        {
+          date: `${year}-07-18`,
+          event: "Interim Order",
+          description: "Interim relief granted",
+        },
+        {
+          date: `${year}-10-22`,
+          event: "Final Hearing",
+          description: "Final arguments concluded",
         },
       ],
     };
@@ -52,8 +103,12 @@ Deno.serve(async (req: Request) => {
       },
     });
   } catch (error) {
+    console.error("Error processing request:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({
+        error: "Internal server error",
+        message: error.message || "Failed to fetch case data"
+      }),
       {
         status: 500,
         headers: {
