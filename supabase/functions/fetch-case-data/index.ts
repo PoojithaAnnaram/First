@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.58.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +17,10 @@ Deno.serve(async (req: Request) => {
 
   try {
     const { caseType, caseNumber, year, state, district, courtLevel } = await req.json();
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     if (!caseNumber || !year) {
       return new Response(
@@ -96,6 +101,26 @@ Deno.serve(async (req: Request) => {
       ],
     };
 
+    const clientIp = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
+
+    const { error: dbError } = await supabase
+      .from("case_queries")
+      .insert({
+        case_type: caseType,
+        case_number: caseNumber,
+        year: year,
+        state: state,
+        district: district,
+        court_level: courtLevel,
+        raw_response: mockCaseData,
+        ip_address: clientIp,
+        status: "success",
+      });
+
+    if (dbError) {
+      console.error("Database error:", dbError);
+    }
+
     return new Response(JSON.stringify(mockCaseData), {
       headers: {
         ...corsHeaders,
@@ -104,6 +129,29 @@ Deno.serve(async (req: Request) => {
     });
   } catch (error) {
     console.error("Error processing request:", error);
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (supabaseUrl && supabaseServiceKey) {
+      try {
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        await supabase
+          .from("case_queries")
+          .insert({
+            case_type: "unknown",
+            case_number: "error",
+            year: "error",
+            state: "unknown",
+            court_level: "unknown",
+            raw_response: { error: error.message },
+            status: "error",
+          });
+      } catch (logError) {
+        console.error("Failed to log error:", logError);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         error: "Internal server error",
